@@ -1,4 +1,4 @@
-SUBDIRS = examples
+SUBDIRS = examples handlers
 APXS_LIBEXEC = $(shell apxs -q LIBEXECDIR)
 
 all: mod_websocket.la mod_websocket_draft76.la $(SUBDIRS)
