@@ -193,22 +193,20 @@ void *APR_THREAD_FUNC tcp_proxy_range_run(apr_thread_t * thread, void *data)
             apr_size_t len = sizeof(buf);
 
             apr_status_t rv;
-            do {
-                rv = apr_socket_recv(tpd->tcpsocket, buf, &len);
-                if (!len)
-                    usleep(10000);      /* this should not happen */
-            } while (!len && !APR_STATUS_IS_EOF(rv));
-            /* now len must be non-zero OR status must not be EOF */
-            if (len != 0 && rv != APR_SUCCESS && !APR_STATUS_IS_EOF(rv)) {
-                char s[1024];
-                apr_strerror(rv, s, sizeof(s));
-                APACHELOG(APLOG_DEBUG, r,
-                          "tcp_proxy_range_run apr_socket_recv failed len=%lu rv=%d, %s",
-                          (unsigned long) len, rv, s);
-                tcp_proxy_range_shutdown_socket(tpd);
-                tpd->server->close(tpd->server);
-                break;
-            } 
+	    rv = apr_socket_recv(tpd->tcpsocket, buf, &len);
+
+            if (rv != APR_SUCCESS && !APR_STATUS_IS_EOF(rv)) {
+	      /* we've received a result value that's neither EOF nor
+		 SUCCESS, so we're going to shutdown now. */
+	      char s[1024];
+	      apr_strerror(rv, s, sizeof(s));
+	      APACHELOG(APLOG_DEBUG, r,
+			"tcp_proxy_range_run apr_socket_recv failed len=%lu rv=%d, %s",
+			(unsigned long) len, rv, s);
+	      tcp_proxy_range_shutdown_socket(tpd);
+	      tpd->server->close(tpd->server);
+	      break;
+            }
 	    else if ( len == 0 ) {
 	      /* nothing was read this time round. */
 	      continue;
